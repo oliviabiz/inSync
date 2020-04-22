@@ -1,5 +1,4 @@
 console.log('Client running');
-console.log(window);
 
 var socket = io.connect();
 // const play = document.getElementById('play');
@@ -13,6 +12,10 @@ const messageArea = document.querySelector('.messageArea');
 const msgThread = document.querySelector('#thread');
 const msgInput = document.querySelector('#inputMsg');
 const chatRoom = document.querySelector('#chatRoom');
+const queueList = document.querySelector('#queueList');
+
+const inQueueElements = [];
+const inQueueVids = [];
 
 //const closeChat = document.getElementById('closeChat');
 // const player = document.getElementById('player');
@@ -25,7 +28,7 @@ function onPlayerReady() {
 
     
 function onPlayerStateChange() {
-    var state = player.getPlayerState();  
+    var state = player.getPlayerState();
     switch(state){
         case YT.PlayerState.UNSTARTED:
             console.log('unstarted');
@@ -42,7 +45,12 @@ function onPlayerStateChange() {
         case YT.PlayerState.BUFFERING:
             console.log('buffering');
         break;
+        case YT.PlayerState.ENDED:
+            socket.emit('next video');;
+        break;
     }
+    var time = player.getCurrentTime();
+    socket.emit('sync',time);
 }
 
 function initPlayer() {
@@ -76,10 +84,40 @@ function start() {
     function togglePlay(){
         //alert(player);
         //fill in
+        console.log(inQueueVids);
+        if(inQueueVids.length > 1){
+            var nextvid = inQueueVids.pop();
+            console.log(nextvid);
+            var id = `${nextvid[1]}`;
+            console.log('switchint to id', id);
+            player.loadVideoById(id);
+            return false;
+        }
     }
 
-
+    var results = document.querySelectorAll('.result'), i;
+    console.log(results);
+    for(i=0; i < results.length; ++i){
+        console.log(results[i]);
+       forResults(results[i]);   
+    };
     
+    function forResults(result){
+        var title = result.querySelector('.title').textContent;
+        var id = result.querySelector('.url').textContent;
+        var imgsrc = result.querySelector('.thumbnail').src;
+
+        //var vid = (title,link,imgsrc);
+
+        console.log(imgsrc.textContent);
+        result.addEventListener('click', (e)  => {
+            console.log('title',title);
+            if(confirm(`Add "${title}" to queue?`)){
+                socket.emit('add video', title,link,imgsrc);
+            }
+        });
+    }
+
     // play.addEventListener('click', (e) => {
     //     e.preventDefault();
     //     player.playVideo();
@@ -99,18 +137,7 @@ function start() {
     //     socket.emit('sync', time);
     // });
 
-    socket.on('pause video', () => {
-        player.pauseVideo();
-    });
-
-    socket.on('play video', () => {
-        player.playVideo();
-    });
-
-    socket.on('sync video', (time) => {
-        player.seekTo(time);
-    });
-
+    
 
     sendMsg.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -143,16 +170,6 @@ function start() {
 
     socket.on('display message', msg => {
         displayMessage(msg);
-        // const newmsg = document.createElement('li');
-        // newmsg.classList.add('msg');
-        // newmsg.classList.add('other');
-
-        // newmsg.innerHTML = `<span class="meta">Olivia 9:54pm</span>
-        // <p class="text">
-        //     ${msg}
-        //     </p>`;
-
-        // msgThread.appendChild(newmsg);
     });
 }
 
@@ -162,4 +179,52 @@ $(window).on('load', function() {
     console.log('window loaded');
     //window.onYouTubeIframeAPIReady 
     window.onYTReady = initPlayer();
+});
+
+socket.on('pause video', () => {
+    player.pauseVideo();
+});
+
+socket.on('play video', () => {
+    player.playVideo();
+});
+
+socket.on('sync video', (time) => {
+    player.seekTo(time);
+});
+
+socket.on('remove video', (num) => {
+    var toDelete = queue[num];
+    toDelete.parentNode.removeChild(toDelete);
+    inQueue.splice(toDelete);
+});
+
+socket.on('add video', (title,link,imgsrc) => {
+    console.log('add', title);
+
+    console.log('Adding to queue');
+    var vid = document.createElement('li');
+    $(vid).addClass('list');
+    $(vid).addClass('vid');
+
+    $(vid).html(
+        `<div class="info">
+            <h2 class='title'>${title}</h2>
+            <a href="${link}"></a>
+        </div>
+        <img class='thumbnail' src="${imgsrc}">`
+    );
+
+    inQueueElements.push(vid);
+    var vidData = [title,link,imgsrc];
+    inQueueVids.push(vidData);
+
+    queueList.appendChild(vid);
+    vid.addEventListener('click', (e) =>{
+        if(confirm(`Remove "${title}" from queue?`)){
+            //delete from playlist
+            socket.emit('remove video', queue.indexOf(vid));
+        }
+    });
+
 });

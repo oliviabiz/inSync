@@ -8,18 +8,17 @@ const $addVid = $('.addVid');
 $(document).ready(function() {
     console.log('YouTube Search ready');
 
+
     $('#yt-search').submit(function(e) {
         e.preventDefault();
         clearResults();
         console.log('submit');
         var text = $search.val();
-        console.log(text);
-        //$search.val('');
         search(text, 10);
     });
 
     function search(keyword, num){ 
-        console.log('search for', keyword);
+        console.log('Search for', keyword);
         $.get(
             'https://www.googleapis.com/youtube/v3/search', {
                 part: "snippet",
@@ -30,7 +29,6 @@ $(document).ready(function() {
                 key: myKey },
                 function(data) {
                     $.each(data.items, function(i, item) {
-                        //console.log(item.snippet.title);
                         display(item);
                     })
                 }
@@ -50,10 +48,24 @@ $(document).ready(function() {
             `<img class='thumbnail' src="${imgsrc}">
             <div class="info">
                 <h2 class='title'>${title}</h2>
-                <button type="button" class="addVid">+<a href="${link}"></a></button>
+                <button type="button" class="addVid">+<span class="url" href="${link}"></span></button>
             </div>`
         );
+        var title = d.querySelector('.title').textContent;
         $(d).appendTo($results);
+
+        d.addEventListener('click', (e)  => {
+            console.log(inQueueElements.includes(d));
+            if(inQueueElements.includes(d) == true){
+                alert(`"${title}" is already in queue`);
+            }
+            else if(confirm(`Add "${title}" to queue?`)){
+                socket.emit('add video', title,id,imgsrc);
+                inQueueElements.push(d);
+                var vid = [title,link,imgsrc];
+                inQueueVids.push(vid);
+            }
+        });
     }
 
     function clearResults(){
@@ -63,10 +75,4 @@ $(document).ready(function() {
     $clear.click(function(e) {
         $search.val('');
     })
-
-    $addVid.click(function(e) {
-        console.log(e.target);
-    })
-
-
 });

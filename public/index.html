@@ -16,7 +16,7 @@
 
             <div class="upper">
                 <div class="tab" id="searchTab">
-                    <img class="arrow" src="images/arrow.png" width="30px"/>
+                    <img class="arrow" width="30px"/>
                 </div>
                 <div class="search">
                     <form action="" id="yt-search">
@@ -24,13 +24,13 @@
                         <input type="text" name="" id="searchInput" placeholder="Search">
                     </form>
                     <ul id='resultsArea'>
-                        <li class="result vid">
-                                <!-- <img class='thumbnail' src="https://i.ytimg.com/vi/jPan651rVMs/hqdefault.jpg" alt="" srcset="">
-                                <div class="info">
-                                    <h2 class='title'>Joji - Gimme Love (Official Video)</h2>
-                                    <button type="button" class="addVid">+<a href="https://www.youtube.com/watch?v=jPan651rVMs"></a></button>
-                                </div> -->
-                        </li>
+                        <!-- <li class="result vid"> 
+                            <img class='thumbnail' src="https://i.ytimg.com/vi/jPan651rVMs/hqdefault.jpg">
+                            <div class="info">
+                                <h2 class='title'>Joji - Gimme Love (Official Video)</h2>
+                                <button type="button" class="addVid">+<a class="url" href="https://www.youtube.com/watch?v=jPan651rVMs"></a></button>
+                            </div>
+                        </li> -->
                     </ul>
                 </div>
 
@@ -77,17 +77,31 @@
                 </div>
 
                 <div class="tab" id="chatTab">
-                    <img class="arrow" src="images/arrow.png" width="30px"/>
+                    <img class="arrow" width="30px"/>
                 </div>
     
 
             </div>
 
-            <div class="queueArea">
-                queue
-                <ul id="queue"></ul>
-            </div>
+            <div class="queue">
+                <div id="queueArea">
+                    <ul id="queueList">
+                        
+                        <!-- <li class="list vid"> 
+                            <div class="info">
+                                <h2 class='title'>Joji - Gimme Love (Official Video)</h2>
+                                <a class="url" href="https://www.youtube.com/watch?v=jPan651rVMs"></a>
+                            </div>
+                            <img class='thumbnail' src="https://i.ytimg.com/vi/jPan651rVMs/hqdefault.jpg">
+                            
+                        </li> -->
 
+                    </ul>
+                </div>
+            </div>
+            <div id="queueTab">
+                <img class="arrow" width="30px"/>
+            </div>
         </div>
 
     </body>
@@ -100,4 +114,3 @@
 <script src="js/client.js"></script>
 <script src="js/format.js"></script>
 <script src="js/youtube.js"></script>
-
