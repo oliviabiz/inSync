@@ -10,6 +10,11 @@
         basic layout
 */
 
+html,body{
+    height: 100%;
+    width: 100%;
+}
+
 body{
     height: 100%;
     overflow: hidden;
@@ -48,7 +53,10 @@ header{
 
 .search{
     width: 20vw;
-    background-color: #333232;
+    background-color: #333232;  
+    height: 90%;
+    margin: auto 0px;
+
 }
 
 .chat{
@@ -165,9 +173,6 @@ header:hover > h1{
     height: 80%;
     padding: 5px 5px 0px 5px;
     box-sizing: border-box;
-    /* padding: 5px;
-    box-sizing: border-box; */
-    /* border: 2px solid yellow; */
 }
 
 #chatControl{
@@ -362,14 +367,11 @@ header:hover > h1{
 #yt-search{
     height: 10%;
     display: flex;
-
-
+    background-color: white;
 }
 
 #searchInput{
-    height: 50%;
-    width: 90%;
-
+    width: 80%;
     box-sizing: border-box;
     border: none;
     padding: 4px;
@@ -380,9 +382,18 @@ header:hover > h1{
     border: none;
     box-sizing: border-box;
     background-color: white;
-    height: 50%;
     width: 10%;
     color: grey;
+}
+
+#searchBtn{
+    background-color: transparent;
+    opacity: 0.5;
+    width: 10%;
+    object-fit: scale-down;
+
+    box-sizing: border-box;
+    padding: 2px;
 }
 
 
@@ -402,10 +413,8 @@ header:hover > h1{
     flex-wrap: wrap;
 
     justify-content: space-between;
-
     box-sizing: border-box;
 
-    padding: ;
     background-color: whitesmoke;
 }
 
@@ -424,8 +433,8 @@ header:hover > h1{
 
 .thumbnail{
     object-fit: scale-down;
-    width: 120px;
-    height: 90px;
+    width: 100px;
+    height: 66px;
 }
 
 

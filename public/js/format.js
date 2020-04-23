@@ -12,7 +12,6 @@ $(document).ready(function() {
     console.log('Format.js ready');
 
     chatRoom.addEventListener('click', () => {
-        console.log('CLICKED');
         var name = chatRoom.textContent;
         if(confirm(`Leave chat "${name}?"`) === true){
             //Redirect to home page

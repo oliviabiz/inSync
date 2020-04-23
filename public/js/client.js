@@ -1,10 +1,6 @@
 console.log('Client running');
 
-var socket = io.connect();
-// const play = document.getElementById('play');
-// const pause = document.getElementById('pause');
-// const sync = document.getElementById('sync');
-// const chat = document.getElementById('chat');
+const socket = io.connect();
 
 const sendMsg = document.getElementById('chatControl');
 const chatArea = document.getElementById('chatArea');
@@ -17,22 +13,27 @@ const queueList = document.querySelector('#queueList');
 const inQueueElements = [];
 const inQueueVids = [];
 
-//const closeChat = document.getElementById('closeChat');
-// const player = document.getElementById('player');
 var player;
+var name;
 
 function onPlayerReady() {
-    console.log('Player ready');
-    player.playVideo();
+    console.log('Player ready', player);
+    player.pauseVideo();
+    //player.cueVideoById("9RTaIpVuTqE");
+    socket.emit('ready'); 
+   
 }
 
+function updateCount(num){
+    chatRoom.textContent = `${num} online`;
+}
     
 function onPlayerStateChange() {
     var state = player.getPlayerState();
     switch(state){
         case YT.PlayerState.UNSTARTED:
             console.log('unstarted');
-            player.playVideo();
+            play();
             break;
         case YT.PlayerState.PAUSED:
             console.log('paused');
@@ -46,11 +47,17 @@ function onPlayerStateChange() {
             console.log('buffering');
         break;
         case YT.PlayerState.ENDED:
-            socket.emit('next video');;
+            console.log('ended');
+            socket.emit('next video');
+        break;
+        case YT.PlayerState.CUED:
+            console.log('queued');
+            play();
+        break;
+        default:
+            console.log('state unknown', state);
         break;
     }
-    var time = player.getCurrentTime();
-    socket.emit('sync',time);
 }
 
 function initPlayer() {
@@ -61,44 +68,26 @@ function initPlayer() {
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }
-    console.log(typeof(YT), typeof(YT.Player)); //doesn't always work :(
-
     player = new YT.Player('video', {
+        "origin" : "http://localhost:3000",
         events: {
         'onReady':onPlayerReady,
         'onStateChange':onPlayerStateChange
     }
     });
-    console.log('player:', player);
     start();
 }
 
 function start() {
-    console.log('Starting client fr');
+    console.log('Starting client');
     window.addEventListener('keydown', (e) => {
         if(e.keyCode === 32){
-            togglePlay();
+         //   play();
         }
     });
-    
-    function togglePlay(){
-        //alert(player);
-        //fill in
-        console.log(inQueueVids);
-        if(inQueueVids.length > 1){
-            var nextvid = inQueueVids.pop();
-            console.log(nextvid);
-            var id = `${nextvid[1]}`;
-            console.log('switchint to id', id);
-            player.loadVideoById(id);
-            return false;
-        }
-    }
 
-    var results = document.querySelectorAll('.result'), i;
-    console.log(results);
+    /*var results = document.querySelectorAll('.result'), i;
     for(i=0; i < results.length; ++i){
-        console.log(results[i]);
        forResults(results[i]);   
     };
     
@@ -107,64 +96,40 @@ function start() {
         var id = result.querySelector('.url').textContent;
         var imgsrc = result.querySelector('.thumbnail').src;
 
-        //var vid = (title,link,imgsrc);
-
-        console.log(imgsrc.textContent);
         result.addEventListener('click', (e)  => {
-            console.log('title',title);
             if(confirm(`Add "${title}" to queue?`)){
-                socket.emit('add video', title,link,imgsrc);
+                socket.emit('add video', title,id,imgsrc);
             }
         });
-    }
-
-    // play.addEventListener('click', (e) => {
-    //     e.preventDefault();
-    //     player.playVideo();
-    //     socket.emit('play');
-    // });
-
-    // pause.addEventListener('click', (e) => {
-    //     e.preventDefault();
-    //     player.pauseVideo();
-    //     socket.emit('pause');
-    // });
-
-    // sync.addEventListener('click', (e) => {
-    //     var time = player.getCurrentTime();
-    //     console.log('current time:', time);
-
-    //     socket.emit('sync', time);
-    // });
-
+    }*/
     
-
     sendMsg.addEventListener('submit', (e) => {
         e.preventDefault();
-        var msg = msgInput.value;
+        var msg = [msgInput.value, name];
         console.log('new message');
         socket.emit('message', msg);
         msgInput.value = '';
-
         displayMessage(msg, isSelf=true);
     });
 
     function displayMessage(msg, isSelf) {
         const newmsg = document.createElement('li');
+        var text = msg[0];
+        var user = msg[1];
+
         newmsg.classList.add('msg');
-        if(isSelf === true){
+        if(isSelf == true){
             newmsg.classList.add('self');
         }
         else{
             newmsg.classList.add('other');
         }
 
-        newmsg.innerHTML = `<span class="meta">Olivia 9:54pm</span>
+        newmsg.innerHTML = `<span class="meta">${user} 9:54pm</span>
         <p class="text">
-            ${msg}
+            ${text}
             </p>`;
 
-        // msgThread.appendChild(newmsg);
         msgThread.insertBefore(newmsg, msgThread.firstChild);
     };
 
@@ -174,35 +139,72 @@ function start() {
 }
 
 
-//$(document).ready(function() {
 $(window).on('load', function() {
     console.log('window loaded');
-    //window.onYouTubeIframeAPIReady 
     window.onYTReady = initPlayer();
 });
 
+socket.on('get name', () => {
+    getName();
+});
+
+function getName(){
+    name = prompt('Enter a user name');
+    socket.emit('new user', name);
+}
+
+socket.on('new user', (userName, userCount) => {
+    console.log(name, 'entered the chat');
+    console.log(userCount, 'currently online');
+    updateCount(userCount);
+});
+
+socket.on('user left', (name, size) =>{
+    updateCount(size);
+    console.log(name,'left chat');
+});
+
 socket.on('pause video', () => {
-    player.pauseVideo();
+    if(player.getPlayerState() == YT.PlayerState.PLAYING){
+        player.pauseVideo();
+    }
 });
 
 socket.on('play video', () => {
-    player.playVideo();
+    play();
 });
 
 socket.on('sync video', (time) => {
-    player.seekTo(time);
+    player.seekTo(time, true);
 });
 
-socket.on('remove video', (num) => {
-    var toDelete = queue[num];
-    toDelete.parentNode.removeChild(toDelete);
-    inQueue.splice(toDelete);
+socket.on('next video', () => {
+    if(inQueueVids.length > 0){
+        removeVid(0);
+        var nextvid = inQueueVids.pop();
+        console.log('Next up:', nextvid[0], 'id:', nextvid[1]);
+        var id = `${nextvid[1]}`;
+        player.loadVideoById(id);
+        play();
+    }
 });
 
-socket.on('add video', (title,link,imgsrc) => {
-    console.log('add', title);
+socket.on('load current', (nextvid) => {
+    console.log('Loading next up:', nextvid[0], 'id:', nextvid[1]);
+    var id = `${nextvid[1]}`;
+    player.loadVideoById(id);
+});
 
-    console.log('Adding to queue');
+socket.on('poll', () => {
+    console.log('POLLED');
+    var t  = player.getCurrentTime();
+    socket.emit('post', t);
+});
+
+socket.on('remove video', (num) => removeVid(num));
+
+socket.on('add video', (title,id,imgsrc) => {
+    console.log('add', title, 'to queue');
     var vid = document.createElement('li');
     $(vid).addClass('list');
     $(vid).addClass('vid');
@@ -210,21 +212,43 @@ socket.on('add video', (title,link,imgsrc) => {
     $(vid).html(
         `<div class="info">
             <h2 class='title'>${title}</h2>
-            <a href="${link}"></a>
+            <a href="${id}"></a>
         </div>
         <img class='thumbnail' src="${imgsrc}">`
     );
 
     inQueueElements.push(vid);
-    var vidData = [title,link,imgsrc];
+    var vidData = [title,id,imgsrc];
     inQueueVids.push(vidData);
 
     queueList.appendChild(vid);
     vid.addEventListener('click', (e) =>{
         if(confirm(`Remove "${title}" from queue?`)){
             //delete from playlist
-            socket.emit('remove video', queue.indexOf(vid));
+            socket.emit('remove video', inQueueElements.indexOf(vid));
         }
     });
 
 });
+
+function removeVid(num) {
+    console.log('Delete ', num , ' element in queue', inQueueElements.length);
+    var elementToDelete = inQueueElements[num];
+    elementToDelete.parentNode.removeChild(elementToDelete);
+    inQueueElements.splice(elementToDelete);
+    //inQueueVids.splice(inQueueVids[num]);
+}
+
+function play(){
+    console.log('play initiated');
+    player.playVideo();
+    /*var count = 0;
+    while((player.getPlayerState() !== YT.PlayerState.PLAYING) && (count < 10)){
+        player.playVideo();
+        count = count + 1;
+        console.log(count, 'tries to start video');
+        setTimeout(function() {
+            player.playVideo();
+        }, 1500);
+    }*/
+};
