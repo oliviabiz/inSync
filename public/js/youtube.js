@@ -41,11 +41,12 @@ $(document).ready(function() {
         );
     }
 
+    // Display search results
     function display(item){
         var title = item.snippet.title;
-        var imgsrc = item.snippet.thumbnails.high.url;
         var id = item.id.videoId;
-
+        var imgsrc = item.snippet.thumbnails.high.url;
+        
         var d = document.createElement('li');
         $(d).addClass('result');
         $(d).addClass('vid');

@@ -2,7 +2,6 @@ const searchTab = document.querySelector('#searchTab');
 const chatTab = document.querySelector('#chatTab');
 const queueTab = document.querySelector('#queueTab');
 
-//const chatRoom = document.querySelector('#chatRoom');
 
 const search = document.querySelector('.search');
 const chat = document.querySelector('.chat');
@@ -39,9 +38,12 @@ $(document).ready(function() {
     chatTab.addEventListener('click', function() {
         // var arrow = chatTab.childNodes[1];
         if(chat.style.display === 'none'){
+            // Open chat box
             chatTab.style.transform = 'rotate(180deg)';
+            chatTab.style.backgroundColor = 'whitesmoke';
             chat.style.display = 'flex';
             searchTab.style.display = 'none';
+            document.title = 'inSync';
         }
         else{
             chatTab.style.transform = 'rotate(0deg)';

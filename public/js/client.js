@@ -14,13 +14,13 @@ const inQueueElements = [];
 const inQueueVids = [];
 
 var player;
-var name;
+var myName;
 
 function onPlayerReady() {
-    console.log('Player ready', player);
-    player.pauseVideo();
+    console.log('PLAYER ready', player);
+ //   player.pauseVideo();
     //player.cueVideoById("9RTaIpVuTqE");
-    socket.emit('ready'); 
+    socket.emit('player ready'); 
    
 }
 
@@ -33,7 +33,7 @@ function onPlayerStateChange() {
     switch(state){
         case YT.PlayerState.UNSTARTED:
             console.log('unstarted');
-            play();
+           // play();
             break;
         case YT.PlayerState.PAUSED:
             console.log('paused');
@@ -51,8 +51,9 @@ function onPlayerStateChange() {
             socket.emit('next video');
         break;
         case YT.PlayerState.CUED:
-            console.log('queued');
-            play();
+            console.log('queued at',player.getCurrentTime());
+            socket.emit('video ready');
+           // play();
         break;
         default:
             console.log('state unknown', state);
@@ -60,8 +61,9 @@ function onPlayerStateChange() {
     }
 }
 
-function initPlayer() {
+function initPlayer(vidId) {
     console.log('iFrame API ready');
+    console.log('Initalizing with ID:', vidId);
     if (typeof(window.YT) == 'undefined' || typeof(window.YT.Player) == 'undefined') {
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
@@ -69,7 +71,9 @@ function initPlayer() {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }
     player = new YT.Player('video', {
-        "origin" : "https://in-sync.azurewebsites.net",
+        "origin" : "https://www.youtube.com ", // "https://in-sync.azurewebsites.net",
+        //'videoId': '9RTaIpVuTqE',
+       // 'videoId': vidId,
         events: {
         'onReady':onPlayerReady,
         'onStateChange':onPlayerStateChange
@@ -85,27 +89,10 @@ function start() {
          //   play();
         }
     });
-
-    /*var results = document.querySelectorAll('.result'), i;
-    for(i=0; i < results.length; ++i){
-       forResults(results[i]);   
-    };
-    
-    function forResults(result){
-        var title = result.querySelector('.title').textContent;
-        var id = result.querySelector('.url').textContent;
-        var imgsrc = result.querySelector('.thumbnail').src;
-
-        result.addEventListener('click', (e)  => {
-            if(confirm(`Add "${title}" to queue?`)){
-                socket.emit('add video', title,id,imgsrc);
-            }
-        });
-    }*/
     
     sendMsg.addEventListener('submit', (e) => {
         e.preventDefault();
-        var msg = [msgInput.value, name];
+        var msg = [msgInput.value, myName];
         console.log('new message');
         socket.emit('message', msg);
         msgInput.value = '';
@@ -113,6 +100,12 @@ function start() {
     });
 
     function displayMessage(msg, isSelf) {
+        //Notify if chat is closed
+        if(chat.style.display !== 'flex'){
+            chatTab.style.backgroundColor = '#E87015';
+            document.title = 'inSync (1)';
+        }
+
         const newmsg = document.createElement('li');
         var text = msg[0];
         var user = msg[1];
@@ -144,21 +137,34 @@ $(window).on('load', function() {
     window.onYTReady = initPlayer();
 });
 
+socket.on('init', (id) => {
+    window.onYTReady = initPlayer(id);
+    console.log('Have been provided ID from server', id);
+});
+
+// Called when server receives notif that player is ready
 socket.on('get name', () => {
     getName();
 });
 
 function getName(){
-    name = prompt('Enter a user name');
-    socket.emit('new user', name);
+    myName = prompt('Enter a user name');
+    socket.emit('new user', myName);
 }
 
+// Called when a new username+socket have been defined
 socket.on('new user', (userName, userCount) => {
-    console.log(name, 'entered the chat');
+    if(userName == myName){
+        alert(`Welcome, ${myName}!`);
+    }
+    else{
+        alert(`${userName} entered the chat`);
+    }
     console.log(userCount, 'currently online');
     updateCount(userCount);
 });
 
+// Called when a socket disconnects
 socket.on('user left', (name, size) =>{
     updateCount(size);
     console.log(name,'left chat');
@@ -174,10 +180,12 @@ socket.on('play video', () => {
     play();
 });
 
-socket.on('sync video', (time) => {
-    player.seekTo(time, true);
+socket.on('sync video', (id,time) => {
+    player.cueVideoById(id,time);
+//    player.seekTo(time, true);
 });
 
+// Called after video ended if there is anything in queue
 socket.on('next video', () => {
     if(inQueueVids.length > 0){
         removeVid(0);
@@ -189,12 +197,25 @@ socket.on('next video', () => {
     }
 });
 
-socket.on('load current', (nextvid) => {
-    console.log('Loading next up:', nextvid[0], 'id:', nextvid[1]);
-    var id = `${nextvid[1]}`;
-    player.loadVideoById(id);
+// Loads 
+socket.on('load', (id, time) => {
+    //console.log('Loading next up:', nextvid[0], 'id:', nextvid[1]);
+    //var id = `${nextvid[1]}`;
+    //player.loadVideoById(id);
+    if(time!== Infinity){
+        player.cueVideoById(id, time);
+   
+      //  player.seekTo(time);
+
+        console.log('loaded to', time);
+        console.log('currently at', player.getCurrentTime());
+    }
+    else{
+        player.cueVideoById(id);
+    }
 });
 
+// Request from server to give time update
 socket.on('poll', () => {
     console.log('POLLED');
     var t  = player.getCurrentTime();
@@ -203,6 +224,7 @@ socket.on('poll', () => {
 
 socket.on('remove video', (num) => removeVid(num));
 
+// Adds video to queue
 socket.on('add video', (title,id,imgsrc) => {
     console.log('add', title, 'to queue');
     var vid = document.createElement('li');
@@ -232,23 +254,15 @@ socket.on('add video', (title,id,imgsrc) => {
 });
 
 function removeVid(num) {
-    console.log('Delete ', num , ' element in queue', inQueueElements.length);
+    console.log('Delete ', num , ' video in queue', inQueueElements.length);
     var elementToDelete = inQueueElements[num];
     elementToDelete.parentNode.removeChild(elementToDelete);
     inQueueElements.splice(elementToDelete);
-    //inQueueVids.splice(inQueueVids[num]);
+    
+    inQueueVids.splice(inQueueVids[num]);
 }
 
 function play(){
     console.log('play initiated');
     player.playVideo();
-    /*var count = 0;
-    while((player.getPlayerState() !== YT.PlayerState.PLAYING) && (count < 10)){
-        player.playVideo();
-        count = count + 1;
-        console.log(count, 'tries to start video');
-        setTimeout(function() {
-            player.playVideo();
-        }, 1500);
-    }*/
 };
