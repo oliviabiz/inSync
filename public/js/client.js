@@ -259,7 +259,7 @@ function removeVid(num) {
     elementToDelete.parentNode.removeChild(elementToDelete);
     inQueueElements.splice(elementToDelete);
     
-    inQueueVids.splice(inQueueVids[num]);
+    //inQueueVids.splice(inQueueVids[num]);
 }
 
 function play(){
