@@ -74,9 +74,7 @@ function initPlayer(vidId) {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }
     player = new YT.Player('video', {
-        "origin" : "https://www.youtube.com ", // "https://in-sync.azurewebsites.net",
-        //'videoId': '9RTaIpVuTqE',
-       // 'videoId': vidId,
+        "origin" : "https://in-sync.azurewebsites.net",
         events: {
         'onReady':onPlayerReady,
         'onStateChange':onPlayerStateChange
