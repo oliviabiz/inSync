@@ -36,7 +36,6 @@ $(document).ready(function() {
     });
 
     chatTab.addEventListener('click', function() {
-        // var arrow = chatTab.childNodes[1];
         if(chat.style.display === 'none'){
             // Open chat box
             chatTab.style.transform = 'rotate(180deg)';
@@ -45,7 +44,7 @@ $(document).ready(function() {
             searchTab.style.display = 'none';
             document.title = 'inSync';
         }
-        else{
+        else {
             chatTab.style.transform = 'rotate(0deg)';
             chat.style.display = 'none';
             searchTab.style.display = 'unset';

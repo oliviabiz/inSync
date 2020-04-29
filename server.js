@@ -8,35 +8,37 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
+const {
+    newRoom,
+    deleteRoom,
+    roomExists,
+    userJoin,
+    getCurrentUser,
+    getUserName,
+    getUserRoomname,
+    getUserRoom,
+    userLeave,
+    getRoomUsers,
+    numRoomUsers,
+    getUsers
+} = require('./public/js/utils/room');
+
 const welcomeVid = '9RTaIpVuTqE'; //'jPan651rVMs';
 
-var queue = [];
-var users = new Map();
-var current = -1;
-
-var times;
 
 //Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
-var numUsers = 0;
-
-var PREV_STATE;
-var CONNECTING = false;
 
 //Client connection
-io.on('connection', socket => {
-    CONNECTING = true;
-    numUsers++;
-    socket.broadcast.emit('pause video'); // Everybody freeze
-
-
-    console.log('NEW USER -', queue.length, 'vids in queue and', numUsers, 'users');
+io.on('connection', socket => {   
+    console.log('New Connection');
 
     var initID;
     function initialize(){
-        if(current !== -1){
-            initID = current[1];
-            console.log('Start with current vid', current[0]);
+        var room = getUserRoom(socket.id);
+        if(room.current !== -1){
+            initID = room.current[1];
+            console.log('Start with current vid', room.current[0]);
         }
         else{
             initID = welcomeVid;
@@ -44,138 +46,156 @@ io.on('connection', socket => {
         }
     }
     
-    initialize();
-    //socket.emit('init', initID);
-
     //Called when client's player is initialized
     socket.on('player ready', () => {
-       console.log('new users window is loaded');
-       socket.emit('get name');
-    });
-
-    socket.on('video ready', () => {
-        console.log('READY FOR TAKEOFF BOYS');
-
-        // Reset players to previous state
-        CONNECTING = false;
-        if(PREV_STATE == 'PLAY'){
-            io.emit('play video');
-        }
+       socket.emit('get user');
     });
 
     // Called when client responds to username prompt
-    socket.on('new user', name => {
-        users.set(socket, name);
-        console.log('---------------Welcome,',name);
+    socket.on('new user', (name, room) => {
+        var user = userJoin(socket.id, name, room);
+        socket.to(room).emit('pause video'); // Everybody freeze
 
-        setTime(); //Sets time and cues current player
-      
+        socket.join(user.room);
+        getUserRoom(user.id).CONNECTING = true;
+
+        initialize();
+
+        console.log(user.name, 'has entered', user.room);
+        console.log(numRoomUsers(user.room), 'in', user.room);
+
+        setTime(getUserRoom(user.id)); //Sets time and cues current player
+
         // Lets everyone know of a new user, update their count
-        io.emit('new user', name, users.size);
+        io.in(user.room).emit('new user', user.name, numRoomUsers(room));
+        fillQueue();
     });
-    
+
+    socket.on('video ready', () => {
+        var room = getUserRoom(socket.id);
+   
+        // Reset players to previous state
+        room.CONNECTING = false;
+        if(room.PREV_STATE == 'PLAY'){
+            //socket.emit('play video');
+            // will it trickle?            
+            io.in(room.name).emit('play video');
+        }
+    });
+
     // Fill in new user's queue
-    queue.forEach((q) => {
-        console.log(q[0], q[1], q[2]);
-        socket.emit('add video', q[0],q[1],q[2]);
-    });
+    function fillQueue(){    
+        var myRoom = getUserRoom(socket.id);
+        myRoom.queue.forEach((q) => {
+            console.log(q[0], q[1], q[2]);
+            socket.emit('add video', q[0],q[1],q[2]);
+        });
+    }
 
     socket.on('disconnect', () =>{
-        numUsers--;
-        var name = users.get(socket);
-        console.log(name, 'left chat');
-        users.delete(socket);
-        io.emit('user left', name, users.size);
+        var user = getCurrentUser(socket.id);
+        
+        if(user == 'undefined'){
+            console.log('PROBLEM - DELETING UNDEFINED');
+            return;
+        }
+      //  console.log('DELETING', user);
+       
+
+        userLeave(socket.id);
+
+        var numLeft = numRoomUsers(user.room);
+        console.log(user.name, 'left', user.room, numLeft, 'remaining');
+
+        io.in(user.room).emit('user left', user.name, numRoomUsers(user.room));
      
         // Refresh server if no connections remaining
-        if(users.size == 0){
-            console.log('CLEAR SERVER');
-            users.clear();
-            queue = [];
-            times = [];
-            current = -1;
+        if(numRoomUsers(user.room) == 0){
+            console.log('CLEARING ROOM', user.room);
+            deleteRoom(user.room);
         }
     });
 
     socket.on('sync', (time) => {
-        console.log('Sync to time', time);
-        io.emit('sync video', time);
+        //console.log('Sync to time', time);
+        io.in(getUserRoomname(socket.id)).emit('sync video', time);
     });
 
     socket.on('pause', () => {
-        //socket.broadcast.
-
         // Prevents pause from propagating when initalizing new player
-        if(CONNECTING == false){
-            io.emit('pause video');
-            PREV_STATE = 'PAUSE';
+        var room = getUserRoom(socket.id);
+        if(room.CONNECTING == false){
+            io.in(room.name).emit('pause video');
+            room.PREV_STATE = 'PAUSE';
         }
-
     });
     socket.on('play', () => {
-        //socket.broadcast.
-        io.emit('play video');
-        PREV_STATE = 'PLAY';
+        var room = getUserRoom(socket.id);
+        io.in(room.name).emit('play video');
+        room.PREV_STATE = 'PLAY';
     });
 
     // Receive new message from user
     socket.on('message', (msg) => {
-        console.log('Received:', msg[0], 'from', msg[1]);
-        socket.broadcast.emit('display message', msg, isSelf=false);
+        //console.log('Received:', msg[0], 'from', msg[1]);
+        socket.to(getUserRoomname(socket.id)).emit('display message', msg, isSelf=false);
     });
     
     socket.on('add video', (title,id,imgsrc)=> {
+        var room = getUserRoom(socket.id);
         var vid = [title,id,imgsrc];
-        queue.push(vid);
-        console.log('Adding', title),'.', queue.length, 'now in queue';
 
-        io.emit('add video', title,id,imgsrc);
+        room.queue.push(vid);
+        console.log('Adding', title,'. Now', room.queue.length, 'vids in', room.name,'queue');
+
+        io.in(room.name).emit('add video', title,id,imgsrc);
 
         //One item in queue AND not playing
-        // Might not need to be only one
-        if(queue.length == 1 && current == -1){
-            io.emit('next video');
-           // io.emit('remove video');
-            current = queue.pop();
+        //Might not need to be only one
+        if(room.queue.length == 1 && room.current == -1){
+            io.in(room.name).emit('next video');
+            room.current = room.queue.pop();
         }
     });
 
     // Client requested to remove video from queue
     socket.on('remove video', (num) => {
-        queue.splice(num);
-        io.emit('remove video', num);
+        var room = getRoom(socket.id);
+        room.queue.splice(num);
+        io.in(room,name).emit('remove video', num);
     });
 
     // Video ended -- will result in pushing everyone forward
     socket.on('next video', () => {
-        if(queue.length == 0){
-            current = -1;
+        var room = getRoom(socket.id);
+        if(room.queue.length == 0){
+            room.current = -1;
         }
         else{
-            io.emit('next video');
-            queue.pop();
-            //io.emit('remove video');
+            io.in(room).emit('next video');
+            room.current = room.queue.pop();
         }
     });
 
     // Received time update from client
     socket.on('post', (time) => {
-        times.push(time);
+        var user = getCurrentUser(socket.id);
+        //console.log('POST from', socket.id, user);
+        getUserRoom(socket.id).times.push(time);
     });
 
-    // Polls all clients (except current) for time update
+    // Polls all clients (except current) un room for time update
     // Loads current client's time to minimum time polled
-    function setTime() {
-        if(numUsers <= 1){
+    function setTime(room) {
+        if(numRoomUsers(room.name) <= 1){
             socket.emit('load', initID, 0);
+            return;
         }
-        times = [];
-        socket.broadcast.emit('poll');
+        room.times = [];
+        socket.to(room.name).emit('poll'); //Poll users in room
         setTimeout(function() {
-            console.log(`${times.length}/${users.size - 1} responses in 2000ms`);
-            console.log(times);
-
-            var t =  Math.min(...times);
+            console.log(`${room.times.length}/${numRoomUsers(room.name)-1} responses in 2000ms`);
+            var t =  Math.min(...room.times);
             console.log('Syncing to time', t);
             socket.emit('load', initID, t);
         }, 2000);

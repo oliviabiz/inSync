@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>inSync</title>
     <link rel="stylesheet" href="css/style.css">
+    <script type="text/javascript" src="js/utils/room.js"></script>
 </head>
 <body>
     <header>
@@ -14,22 +15,21 @@
         <div class="infoContainer">
             <form action="" id="joinRoom">
            
-                <label for="roomName">Create a new room</label>
-                <input type="text" id="roomName" placeholder="Room name">
+            
+
+                <label for="roomID">Enter room ID</label>
+                <input type="text" id="roomID" placeholder="Room ID">
                 
                 <label for="name">Username</label>
                 <input type="text" id="name" placeholder="Enter username">
 
                 <button type="submit" id="join">Join</button>
 
-                <a href="welcome-id.html">Have a room ID? Join directly</a>
+                <a href="welcome.html">Want to create a new room?</a>
             </form>
         </div>
     </div>
 </body>
-
-
-<script src="/socket.io/socket.io.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="js/welcome.js"></script>
+<script type="text/javascript" src="js/welcome.js"></script>
 </html>

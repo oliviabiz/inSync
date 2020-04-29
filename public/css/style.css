@@ -546,3 +546,96 @@ input:focus{
     bottom: 0;
     position: relative;
 }
+
+/*      WELCOME PAGE STYLE
+ */
+
+.welcome{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+
+}
+
+.infoContainer{
+    /* border: 1px solid yellow; */
+    background-color: #333232;
+    width: 40vw;
+    height: 50vh;
+    border-radius: 20px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}
+
+#joinRoom{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    height: 100%;
+}
+
+.welcome *{
+    font-size: xx-large;
+    color: whitesmoke;
+}
+
+.welcome input{
+    height: 40px;
+    font-size: large;
+    color: initial;
+    /* text-align: center; */
+
+    padding: 0px 10px;
+    margin: 10px 0px 20px 0px;
+    border-radius: 10px;
+
+    outline: none;
+    border: none;
+
+    box-sizing: border-box;
+}
+
+.welcome input:focus{
+    border: 1px solid #E87015;
+    
+    /* padding-bottom: 5px; */
+}
+
+#join{
+    background-color: #E87015;
+    outline: none;
+    /* border: 1px solid black; */
+    border: none;
+    border-radius: 5px;
+
+    box-sizing: border-box;
+    margin-bottom: 20px;
+
+    box-shadow: inset 0px 0px 10px 10px rgba(255, 255, 255, 0.089);
+}
+
+#join:active{
+    box-shadow: none;
+}
+
+.welcome a{
+    font-size: initial;
+}
+
+.welcome a:visited{
+    color: white;
+}
+
+.welcome label, .welcome input, .welcome button{
+    width: 70%;
+}

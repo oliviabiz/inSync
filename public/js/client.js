@@ -1,5 +1,6 @@
 console.log('Client running');
 
+
 const socket = io.connect();
 
 const sendMsg = document.getElementById('chatControl');
@@ -13,19 +14,22 @@ const queueList = document.querySelector('#queueList');
 const inQueueElements = [];
 const inQueueVids = [];
 
+const {room, user} = Qs.parse(location.search, {
+    ignoreQueryPrefix: true
+});
+
+console.log(user, 'in room', room);
+
 var player;
-var myName;
+//var user;
 
 function onPlayerReady() {
     console.log('PLAYER ready', player);
- //   player.pauseVideo();
-    //player.cueVideoById("9RTaIpVuTqE");
     socket.emit('player ready'); 
-   
 }
 
 function updateCount(num){
-    chatRoom.textContent = `${num} online`;
+    chatRoom.textContent = `${room}: ${num} online`;
 }
     
 function onPlayerStateChange() {
@@ -33,7 +37,6 @@ function onPlayerStateChange() {
     switch(state){
         case YT.PlayerState.UNSTARTED:
             console.log('unstarted');
-           // play();
             break;
         case YT.PlayerState.PAUSED:
             console.log('paused');
@@ -92,8 +95,7 @@ function start() {
     
     sendMsg.addEventListener('submit', (e) => {
         e.preventDefault();
-        var msg = [msgInput.value, myName];
-        console.log('new message');
+        var msg = [msgInput.value, user];
         socket.emit('message', msg);
         msgInput.value = '';
         displayMessage(msg, isSelf=true);
@@ -135,6 +137,7 @@ function start() {
 $(window).on('load', function() {
     console.log('window loaded');
     window.onYTReady = initPlayer();
+    socket.emit('window ready');
 });
 
 socket.on('init', (id) => {
@@ -143,22 +146,18 @@ socket.on('init', (id) => {
 });
 
 // Called when server receives notif that player is ready
-socket.on('get name', () => {
-    getName();
+socket.on('get user', () => {
+    socket.emit('new user', user, room);
 });
-
-function getName(){
-    myName = prompt('Enter a user name');
-    socket.emit('new user', myName);
-}
 
 // Called when a new username+socket have been defined
 socket.on('new user', (userName, userCount) => {
-    if(userName == myName){
-        alert(`Welcome, ${myName}!`);
+    if(userName === user){
+        alert(`Welcome, ${user}!`);
     }
     else{
-        alert(`${userName} entered the chat`);
+     //   alert(`${userName} entered the chat`);
+     // Unecessary slow down
     }
     console.log(userCount, 'currently online');
     updateCount(userCount);
@@ -199,16 +198,8 @@ socket.on('next video', () => {
 
 // Loads 
 socket.on('load', (id, time) => {
-    //console.log('Loading next up:', nextvid[0], 'id:', nextvid[1]);
-    //var id = `${nextvid[1]}`;
-    //player.loadVideoById(id);
     if(time!== Infinity){
         player.cueVideoById(id, time);
-   
-      //  player.seekTo(time);
-
-        console.log('loaded to', time);
-        console.log('currently at', player.getCurrentTime());
     }
     else{
         player.cueVideoById(id);
@@ -217,7 +208,6 @@ socket.on('load', (id, time) => {
 
 // Request from server to give time update
 socket.on('poll', () => {
-    console.log('POLLED');
     var t  = player.getCurrentTime();
     socket.emit('post', t);
 });
@@ -254,15 +244,12 @@ socket.on('add video', (title,id,imgsrc) => {
 });
 
 function removeVid(num) {
-    console.log('Delete ', num , ' video in queue', inQueueElements.length);
+    console.log('Delete ', num , ' video in queue', inQueueElements.length); 
     var elementToDelete = inQueueElements[num];
     elementToDelete.parentNode.removeChild(elementToDelete);
     inQueueElements.splice(elementToDelete);
-    
-    //inQueueVids.splice(inQueueVids[num]);
 }
 
 function play(){
-    console.log('play initiated');
     player.playVideo();
 };

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>inSync</title>
+        <link rel="stylesheet" href="css/style.css">
+        <script src="https://www.youtube.com/player_api"></script>
+    </head>
+    <body>
+        <header>
+            <h1 id="headerTitle">inSync</h1>
+            <h1 id="chatRoom"></h1>
+        </header>
+        <div class="main">
+
+            <div class="upper">
+                <div class="tab" id="searchTab">
+                    <img class="arrow" width="30px"/>
+                </div>
+                <div class="search">
+                    <form action="" id="yt-search">
+                        <button type="button" id="clearSearch">X</button>
+                        <input type="text" name="" id="searchInput" placeholder="Search">
+                        <input type="image" id="searchBtn" src="images/search.png" alt="">
+                    </form>
+                    <ul id='resultsArea'>
+                        <!-- <li class="result vid"> 
+                            <img class='thumbnail' src="https://i.ytimg.com/vi/jPan651rVMs/hqdefault.jpg">
+                            <div class="info">
+                                <h2 class='title'>Joji - Gimme Love (Official Video)</h2>
+                                <button type="button" class="addVid">+<a class="url" href="https://www.youtube.com/watch?v=jPan651rVMs"></a></button>
+                            </div>
+                        </li> -->
+                    </ul>
+
+                </div>
+
+                <div class="display">
+                    <div class="videoArea">
+                        <div id="frame">
+                            <!-- https://in-sync.azurewebsites.net -->
+                       <!-- <iframe id="video" src="https://www.youtube.com/embed/9RTaIpVuTqE?enablejsapi=1&version=3&origin=http://localhost:3000" allow="autoplay" frameborder="0"></iframe>
+                         -->
+                        <div id="video" frameborder = "0"></div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="chat">
+                    <div class="chatInfo">
+                        <h1>messages</h1>
+                        <a href="#">
+                            <div id='closeChat'></div>
+                        </a>    
+                    </div>
+                    <div class="messageArea">
+                        <ul id="thread">
+                            <!-- <li class="msg self">
+                                <span class="meta">Olivia 9:54pm</span>
+                                <p class="text">
+                                    Lorem ipsum dolor sit amet consectetur, adipisicing elit. Veritatis, eos!</p>
+                            </li>
+                            <li class="msg other">
+                                <span class="meta">Drake 5:15am</span>
+                                <p class="text">R U up?</p>
+                            </li>
+                            <li class="msg other">
+                                <span class="meta">Mom 3:24pm</span>
+                                <p class="text">Im baby</p>
+                            </li> -->
+
+                            
+                        </ul>
+                    </div>
+
+                    <form id="chatControl">
+                        <textarea id='inputMsg' rows='3' cols='0' placeholder="Enter message"></textarea>
+                        <input type="submit" id='sendMsg' value="Send"> 
+                    </form>
+                </div>
+
+                <div class="tab" id="chatTab">
+                    <img class="arrow" width="30px"/>
+                </div>
+    
+
+            </div>
+
+            <div class="queue">
+                <div id="queueArea">
+                    <ul id="queueList">
+                        
+                        <!-- <li class="list vid"> 
+                            <div class="info">
+                                <h2 class='title'>Joji - Gimme Love (Official Video)</h2>
+                                <a class="url" href="https://www.youtube.com/watch?v=jPan651rVMs"></a>
+                            </div>
+                            <img class='thumbnail' src="https://i.ytimg.com/vi/jPan651rVMs/hqdefault.jpg">
+                            
+                        </li> -->
+
+                    </ul>
+                </div>
+            </div>
+            <div id="queueTab">
+                <img class="arrow" width="30px"/>
+            </div>
+        </div>
+
+    </body>
+</html>
+
+<!-- <script src="https://www.youtube.com/player_api"></script> -->
+<script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.9.3/qs.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/client.js"></script>
+<script src="js/format.js"></script>
+<script src="js/youtube.js"></script>

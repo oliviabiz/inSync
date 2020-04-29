@@ -66,7 +66,7 @@ $(document).ready(function() {
             }
             else if(confirm(`Add "${title}" to queue?`)){
                 socket.emit('add video', title,id,imgsrc);
-                inQueueElements.push(d);
+               // inQueueElements.push(d); taken care of in client
                 var vid = [title,id,imgsrc];
                 inQueueVids.push(vid);
             }
